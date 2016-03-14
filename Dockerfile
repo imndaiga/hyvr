@@ -8,8 +8,16 @@ FROM resin/raspberrypi-systemd:wheezy
 # File Author / Maintainer
 MAINTAINER Wachira Ndaiga
 
+# Expose ports
+EXPOSE 5000
+
+# Create environment variables
+ENV INITSYSTEM on
+ENV XDG_RUNTIME_DIR /run/user/%I
+
 # Update the repository sources list and install dependancies
-RUN sudo apt-get update && apt-get install -y \
+RUN sudo apt-get update \
+  && apt-get install -y \
     python \
     python-dev \
     python-pip \
@@ -22,30 +30,22 @@ RUN sudo apt-get update && apt-get install -y \
     arduino-mk \
     wget \
     ca-certificates \
-    make
+    make \
+  && apt-get clean
 
-# Set application directory tree
-COPY . /panyabot
+# Set application directory
+RUN mkdir /panyabot
 WORKDIR /panyabot
-RUN cd /panyabot
 
-# Create running environment
-RUN pip install virtualenv
-RUN virtualenv flask --system-site-packages
-RUN flask/bin/pip install -r requirements.txt
-RUN chmod 755 db_start.py
-RUN chmod 755 tests.py
-RUN chmod 755 run.py
-RUN chmod 755 run.sh
-RUN chmod 755 app/hostcon.sh
-RUN chmod 755 firmwareman.sh
+# we install requirements first to benefit from docker layers caching
+ADD ./requirements.txt ./requirements.txt
+RUN pip install -r requirements.txt
 
-# Expose ports
-EXPOSE 5000
+# copy the entire source code
+ADD . ./
 
-# Create environment variables
-ENV INITSYSTEM on
-ENV XDG_RUNTIME_DIR /run/user/%I
+# set permissions
+RUN chmod 755 db_start.py tests.py run.py run.sh app/hostcon.sh firmwareman.sh
 
-# Start web app
- CMD ["/bin/bash", "run.sh"]
+# Start the web app
+CMD ["/bin/bash", "run.sh"]

@@ -1,4 +1,3 @@
-#!flask/bin/python
 import collections
 
 commands = []

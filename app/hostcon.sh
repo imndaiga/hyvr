@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Major revision of host-slave connection on *nix/x86 platforms
 # Based on positional parameters (http://linuxcommand.org/wss0130.php)
 
