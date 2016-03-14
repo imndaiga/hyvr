@@ -577,8 +577,11 @@ function linuxpandb {
 		echo "Pairing and Binding"
 		# begin pairing and binding process
 		# restart systemd dbus and bluetooth services as a fail safe check
-		# NOTE: restarting the dbus on a Linux VM will break it.
-		# service dbus restart
+		# The arm processor flag check ensures this isn't run on a VM (it'll break it).
+		armflag=$(uname -m | grep -o arm)
+		if [ ! -z "$armflag"]; then
+			service dbus restart
+		fi
 		service bluetooth restart
 		echo "Checking connection status of" $uid "to" $host "host"
 		# bluetooth ping(ONCE) the bluetooth client to confirm it's up

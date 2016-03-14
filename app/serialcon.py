@@ -322,26 +322,31 @@ def datasend(macid,alias,unick,commands,rfcset,uid,errorkey,cuser):
 	# must be running the arduino panyabot sketch.
 	# future feature to use the standard firmata library to have bidirectional
 	# transmission of data (commands and sensor values).
-	devport = "/dev/"
-	devport+=str(rfcset)
-	print devport
-	ser = serial.Serial(devport)
-	print ser
-	print 'Sending %s\'s commands to %s, alias:%s' % (unick,macid,alias)
-	ser.write('1')
-	time.sleep(1)
-	ser.write('2')
-	time.sleep(1)
-	ser.write('?')
-	time.sleep(2)
-	ser.write('1')
-	ser.close()
-	# print the stored commands to the terminal window
-	for i in range(0,len(commands)):
-		print commands[i]
-	# after downstream data transmission is completed, the attached robot is flushed.
-	rfcommbind(rfcset,macid,None,None,None,uid,"flush",errorkey,cuser)
-	flush = ""
+	try:
+		devport = "/dev/"
+		devport+=str(rfcset)
+		print devport
+		ser = serial.Serial(devport)
+		print ser
+		print 'Sending %s\'s commands to %s, alias:%s' % (unick,macid,alias)
+		ser.write('1')
+		time.sleep(1)
+		ser.write('2')
+		time.sleep(1)
+		ser.write('?')
+		time.sleep(2)
+		ser.write('1')
+		ser.close()
+		# print the stored commands to the terminal window
+		for i in range(0,len(commands)):
+			print commands[i]
+		# after downstream data transmission is completed, the attached robot is flushed.
+		rfcommbind(rfcset,macid,None,None,None,uid,"flush",errorkey,cuser)
+		flush = ""
+	except IOError, e:
+		rfcommbind(rfcset,macid,None,None,None,uid,"flush",errorkey,cuser)
+		print str(e)
+
 
 def rfcommset(robots):
 	# this function manages the allocation of rfcomm port numbers to each incoming request.
