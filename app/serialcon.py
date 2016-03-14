@@ -63,7 +63,8 @@ def messagereturn(cuser,errorkey,stricterror=None,fullcycle=None):
 					{ "error":19, "info":"Device binding error"},{"error":20, "info":"Bluetooth pairing error"},{ "error":21, "info":"Device binding failed"},
 					{ "error":22, "info":"Device not found"},{ "error":23, "info":"No HCI interfaces up"},{ "error":24, "info":"No HCI available"},{ "error":25, "info": "No HCI available"},
 					{ "error":26, "info":"No HCI available"},{ "error":27, "info":"No USB devices found"},{ "error":28, "info":"No Arduinos found"},{ "error":29, "info":"No HCI available"},
-					{"error":30, "info":"Bluetooth setup error"},{ "error":31, "info":"Firmware does not exist"}, { "error":32, "info":"Unexpected error"},{ "error":33, "info":"Fatal error"},{ "error":34, "info":"No HCI available"}
+					{"error":30, "info":"Bluetooth setup error"},{ "error":31, "info":"Firmware does not exist"}, { "error":32, "info":"Unexpected error"},{ "error":33, "info":"Fatal error"},{ "error":34, "info":"No HCI available"},
+					{"error":35, "info":"Couldn't send data"}
 					]
 	if (stricterror==None) and (fullcycle==None):
 		print 'starting halfcycle error logging'
@@ -236,7 +237,7 @@ def sketchupl(sketchpath):
 		# Firmware specified does not exist, explicitly handled through messagereturn
 		return messagereturn(None,None,31,None)
 
-def rfcommbind(rfcset,macid,alias=None,unick=None,commands=None,uid=None,flush=None,errorkey=None,cuser=None):
+def rfcommbind(rfcset,macid,alias=None,unick=None,commands=None,uid=None,flush=None,errorkey=None,cuser=None,returnerror=None):
 	# this function takes the supplied macid passing it to the bash/shell script to
 	# pair to using the simple-bluez-agent tool and attach said macid to a 
 	# /dev/rfcomm port. If the reset flag is passed, the associated robot macid is 
@@ -291,7 +292,7 @@ def rfcommbind(rfcset,macid,alias=None,unick=None,commands=None,uid=None,flush=N
 			db.session.commit()
 			for rob in robots:
 				print "%s:%s" %(robot.alias,robot.status)
-			return messagereturn(cuser,errorkey,None,"fullcycle")
+			return messagereturn(cuser,errorkey,returnerror,"fullcycle")
 		else:
 			print "Error releasing and unpairing bluetooth Device"
 			print 'ERROR 6: Subprocess call complete with '+str(output)+' errors'
@@ -302,18 +303,7 @@ def rfcommbind(rfcset,macid,alias=None,unick=None,commands=None,uid=None,flush=N
 			db.session.commit()
 			for rob in robots:
 				print "%s:%s" %(robot.alias,robot.status)
-			return messagereturn(cuser,errorkey,None,None,"fullcycle")
-		# print 'Skipping unpair and unbind process'
-		# ensure that robot status is always set back to inactive to ensure subsequent client
-		# connections
-		# print 'Cleaning robot status key-value'
-		# robot = Robot.query.filter_by(user_id=uid).first()
-		# robots = Robot.query.all()
-		# robot.status="inactive"
-		# db.session.commit()
-		# for rob in robots:
-		# 	print "%s:%s" %(robot.alias,robot.status)
-		# return messagereturn(cuser,errorkey,None,None)
+			return messagereturn(cuser,errorkey,returnerror,"fullcycle")
 
 def datasend(macid,alias,unick,commands,rfcset,uid,errorkey,cuser):
 	# this is the command transport mechanism. A serial port is opened at the rfcset
@@ -323,30 +313,27 @@ def datasend(macid,alias,unick,commands,rfcset,uid,errorkey,cuser):
 	# future feature to use the standard firmata library to have bidirectional
 	# transmission of data (commands and sensor values).
 	try:
-		devport = "/dev/"
-		devport+=str(rfcset)
+		baud = 9600
+		tbuffer = 1
+		devport = "/dev/"+str(rfcset)
 		print devport
-		ser = serial.Serial(devport)
+		ser = serial.Serial(devport, baud)
 		print ser
 		print 'Sending %s\'s commands to %s, alias:%s' % (unick,macid,alias)
-		ser.write('1')
-		time.sleep(1)
-		ser.write('2')
-		time.sleep(1)
-		ser.write('?')
-		time.sleep(2)
-		ser.write('1')
-		ser.close()
-		# print the stored commands to the terminal window
+		# send and print the stored commands to the robot and terminal window respectively
 		for i in range(0,len(commands)):
+			time.sleep(tbuffer)
 			print commands[i]
+			ser.write(str(commands[i]))
+		ser.close()
 		# after downstream data transmission is completed, the attached robot is flushed.
-		rfcommbind(rfcset,macid,None,None,None,uid,"flush",errorkey,cuser)
+		rfcommbind(rfcset,macid,None,None,None,uid,"flush",errorkey,cuser,None)
 		flush = ""
-	except IOError, e:
-		rfcommbind(rfcset,macid,None,None,None,uid,"flush",errorkey,cuser)
+	except serial.SerialException, e:
+		print 'Port %s not available.' %(devport)
+		print 'Will release and unpair from %s' % (uid)
 		print str(e)
-
+		rfcommbind(rfcset,macid,None,None,None,uid,"flush",errorkey,cuser,35)
 
 def rfcommset(robots):
 	# this function manages the allocation of rfcomm port numbers to each incoming request.

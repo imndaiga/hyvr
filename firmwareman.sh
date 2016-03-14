@@ -6,12 +6,8 @@ echo "$homedir"
 
 function compilefw {
 	echo "compiling $oldfwdir"
-	if [ ! -d $oldfwdir/Makefile ]; then
-		cp $newfwdir/Makefile $oldfwdir/Makefile
-	fi
-	# if [ ! -d $oldfwdir/Common.mk ]; then
-	# 	cp /usr/share/arduino/Common.mk $oldfwdir
-	# fi
+	sketch=$(basename $oldfwdir)
+	echo "working on $sketch sketch"
 	make -C $oldfwdir
 	exstat=$?
 	echo "exstat = $exstat"
