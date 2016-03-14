@@ -6,17 +6,15 @@ echo "$homedir"
 
 function compilefw {
 	echo "compiling $oldfwdir"
-	export BOARD=uno
-	export ARDUINO_DIR=/usr/share/arduino
-	export ARDUINO_LIBS="Servo Wire Firmata"
 	if [ ! -d $oldfwdir/Makefile ]; then
-		cp /usr/share/arduino/Arduino.mk $oldfwdir/Makefile
+		cp $newfwdir/Makefile $oldfwdir/Makefile
 	fi
-	if [ ! -d $oldfwdir/Common.mk ]; then
-		cp /usr/share/arduino/Common.mk $oldfwdir
-	fi
+	# if [ ! -d $oldfwdir/Common.mk ]; then
+	# 	cp /usr/share/arduino/Common.mk $oldfwdir
+	# fi
 	make -C $oldfwdir
 	exstat=$?
+	echo "exstat = $exstat"
 	if [ "$exstat" = "0" ]; then 
 		echo "compile successful"
 		error+=(0)

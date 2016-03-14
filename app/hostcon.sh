@@ -361,45 +361,47 @@ function linuxhciprimer {
 		done
 	# if no HCI devices are available and none are available append
 	# error code 23 and 24 to be caught by errorcatch function.
-	elif [ "$tl" -eq 0 ] && [ "$cn" -eq 0 ]; then
-		error+=(23)
-		error+=(24)
-	# if the number of HCI devices that are available is greater than 0
-	elif [ "$cn" -gt 0 ]; then		
-		# pull down ALL available interfaces first (i.e. hcitool dev = none).
-		for (( h=0; h<"$tl"; h++ )); do
-			if [ "$(($h%2))" = 0 ]; then
-				hciconfig -a "${hcitllist[$h]}" down
-				exstat=$?
-				if [ "$exstat" = "0" ]; then 
-					echo "${hcicnfvar[$n]} reset on host"
-					hcitlvar=$(hcitool dev | while read line; do echo "${line#Devices:}"; done)
-					hcitllist=($(echo "${hcitlvar#$'\n'}"))
-					hcitltotal=$((${#hcitllist[@]}/2))
-					tl=$(echo "$hcitltotal")
-				else
-					# HCI interface pull down failed
-					error+=(9)
+	elif [ "$tl" -eq 0 ]; then
+		if [ "$cn" -eq 0 ]; then
+			error+=(23)
+			error+=(24)
+		# if the number of HCI devices that are available is greater than 0
+		elif [ "$cn" -gt 0 ]; then		
+			# pull down ALL available interfaces first (i.e. hcitool dev = none).
+			for (( h=0; h<"$tl"; h++ )); do
+				if [ "$(($h%2))" = 0 ]; then
+					hciconfig -a "${hcitllist[$h]}" down
+					exstat=$?
+					if [ "$exstat" = "0" ]; then 
+						echo "${hcicnfvar[$n]} reset on host"
+						hcitlvar=$(hcitool dev | while read line; do echo "${line#Devices:}"; done)
+						hcitllist=($(echo "${hcitlvar#$'\n'}"))
+						hcitltotal=$((${#hcitllist[@]}/2))
+						tl=$(echo "$hcitltotal")
+					else
+						# HCI interface pull down failed
+						error+=(9)
+					fi
 				fi
+			done
+			# pull up hci0 after pulling down all available interfaces.
+			hciconfig -a hci0 reset
+			exstat=$?
+			if [ "$exstat" = "0" ]; then 
+				echo "hci0 reset on host"
+				echo "$(hciconfig)"
+				hcitlvar=$(hcitool dev | while read line; do echo "${line#Devices:}"; done)
+				hcitllist=($(echo "${hcitlvar#$'\n'}"))
+				hcitltotal=$((${#hcitllist[@]}/2))
+				tl=$(echo "$hcitltotal")
+				lnxhciflag=1
+			else
+				# HCI interface pull up failed
+				# Might occur due to an rfkill command on host.
+				# Error received with state that the operation
+				# is not permissible.
+				error+=(10)
 			fi
-		done
-		# pull up hci0 after pulling down all available interfaces.
-		hciconfig -a hci0 reset
-		exstat=$?
-		if [ "$exstat" = "0" ]; then 
-			echo "hci0 reset on host"
-			echo "$(hciconfig)"
-			hcitlvar=$(hcitool dev | while read line; do echo "${line#Devices:}"; done)
-			hcitllist=($(echo "${hcitlvar#$'\n'}"))
-			hcitltotal=$((${#hcitllist[@]}/2))
-			tl=$(echo "$hcitltotal")
-			lnxhciflag=1
-		else
-			# HCI interface pull up failed
-			# Might occur due to an rfkill command on host.
-			# Error received with state that the operation
-			# is not permissible.
-			error+=(10)
 		fi
 	fi
 }
@@ -526,9 +528,6 @@ function linuxreinstall {
 	# all attached USB Arduino devices
 
 	echo "Starting firmware install"
-	export ARDUINO_DIR=/usr/share/arduino
-	export BOARD=uno
-	
 	# devpaths is a list that stores all ttyACM* device path details
 	# devnum stores the number of items in the devpaths list
 	devpaths=($(find /sys -name "ttyACM*" | grep devices))
@@ -543,9 +542,7 @@ function linuxreinstall {
 			if [ ! -z "$ardcheck" ]; then
 				target=/dev/$(echo $dev | grep -o ttyACM.)
 				echo "Dev path:"$dev" Dev num:"$devnum" Target:"$target
-				export SERIALDEV=$target
 				export ARDUINO_PORT=$target
-				export ARDUINO_LIBS="Servo Wire Firmata"
 				make -C $skpath upload
 				exstat=$?
 				# $? is a shell status code that returns the previous commands exit code
@@ -575,22 +572,8 @@ function linuxpandb {
 	echo "Number of HCI setup errors = ${#error[@]}"
 	echo "error code(s): ${error[@]}"
 
-	# if atleast one HCI device is up, flushing will be run
-	if [ "$lnxhciflag" -eq 0 ]; then
-		echo "flushing will not be attempted"
-		failflag=1
-	elif [ "$lnxhciflag" -eq 1 ]; then
-		if [ "${#error[@]}" -eq 0 ]; then
-			echo "flushing process will be run"
-			failflag=0
-			lnxhciflag=0
-		else
-			echo "flushing will be attempted despite error state"
-			failflag=0
-			lnxhciflag=0
-		fi
-	fi
-	if [ "$failflag" -eq 0 ]; then
+	if [ "$lnxhciflag" -eq 1 ]; then
+		lnxhciflag=0
 		echo "Pairing and Binding"
 		# begin pairing and binding process
 		# restart systemd dbus and bluetooth services as a fail safe check
