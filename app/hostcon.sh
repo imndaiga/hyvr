@@ -579,7 +579,7 @@ function linuxpandb {
 		# restart systemd dbus and bluetooth services as a fail safe check
 		# The arm processor flag check ensures this isn't run on a VM (it'll break it).
 		armflag=$(uname -m | grep -o arm)
-		if [ ! -z "$armflag"]; then
+		if [ ! -z "$armflag" ]; then
 			service dbus restart
 		fi
 		service bluetooth restart
