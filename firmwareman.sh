@@ -67,7 +67,7 @@ function firmwarecheck {
 		# http://askubuntu.com/questions/300744/copy-the-content-file-to-all-subdirectory-in-a-directory-using-terminal
 		cp -r sketches $homedir/data/
 		for oldfwdir in $homedir/data/sketches/*; do
-			if (oldfwdir != "libraries"):
+			if [ oldfwdir != "libraries" ]:
 				compilefw
 		done
 		error+=(0)
