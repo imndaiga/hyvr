@@ -26,7 +26,6 @@ RUN sudo apt-get update \
     python-gobject \
     python-bluez \
     nano \
-    picocom \
     arduino-mk \
     wget \
     ca-certificates \
@@ -34,8 +33,8 @@ RUN sudo apt-get update \
   && apt-get clean
 
 # Set application directory
-RUN mkdir /panyabot
-WORKDIR /panyabot
+RUN mkdir /webot
+WORKDIR /webot
 
 # we install requirements first to benefit from docker layers caching
 ADD ./requirements.txt ./requirements.txt
