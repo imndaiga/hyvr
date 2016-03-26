@@ -36,7 +36,7 @@ def bluetooth():
 @app.route('/reinstall')
 def reset():
 	if request.method == 'GET':
-		response=sketchupl('../data/sketches/Blink/')
+		response=sketchupl('../data/sketches/Webot_Bluetooth/')
 		return jsonify({'status': response})
 
 @app.route('/register', methods=['GET','POST'])

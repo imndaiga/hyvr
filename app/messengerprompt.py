@@ -4,6 +4,7 @@
 # Make sure the you have the SendAndReceiveArguments example loaded onto the Arduino
 import sys
 import serial
+import time
 
 from cmdmessenger import CmdMessenger
 from serial.tools import list_ports
@@ -14,19 +15,38 @@ class SendAndReceiveArguments(object):
     def __init__(self):
         # make sure this baudrate matches the baudrate on the Arduino
         self.running = False
-        self.baud = 115200
         # this method list is matched with the enumerator type on the Arduino sketch
         # always make sure to have them in the same order.
         self.commands = ['acknowledge',
                          'error',
                          'pin_set_state',
                          'command_result',
-                         'lcd_print'
+                         'lcd_print',
+                         'identify'
                          ]
 
         try:
-            # try to open the first available usb port
-            self.port_name = self.list_usb_ports()[0][0]
+            print 'Ensure that the right firmware is loaded to the webot'
+            print 'Select Serial Interface (USB=1,BLUETOOTH=2) >',
+            selinterface=raw_input()
+            if (selinterface == "1"):
+                print 'Set Baud=115200, readtimeout=0.1'
+                self.baud = 115200
+                self.readtimeout = 0.1
+                print 'USB interface selected'
+                # try to open the first available usb port
+                self.port_name = self.list_usb_ports()[0][0]
+            elif (selinterface == "2"):
+                print 'Set Baud=9600, readtimeout=0.5'
+                self.baud = 9600
+                self.readtimeout = 0.5
+                print 'Bluetooth interface selected'
+                self.port_name = "/dev/rfcomm0"
+            else:
+                print 'Defaulting to USB interface'
+                # try to open the first available usb port
+                self.port_name = self.list_usb_ports()[0][0]
+
             self.serial_port = serial.Serial(self.port_name, self.baud, timeout=0)
         except (serial.SerialException, IndexError):
             raise SystemExit('Could not open serial port.')
@@ -37,12 +57,16 @@ class SendAndReceiveArguments(object):
             self.messenger.attach(func=self.on_error, msgid=self.commands.index('error'))
             self.messenger.attach(func=self.on_command_result,
                                   msgid=self.commands.index('command_result'))
+            self.messenger.attach(func=self.on_identify, msgid=self.commands.index('identify'))
 
             # send a command that the arduino will acknowledge
             self.messenger.send_cmd(self.commands.index('acknowledge'))
             # Wait until the arduino sends an acknowledgement back
             self.messenger.wait_for_ack(ackid=self.commands.index('acknowledge'))
             print 'Edubot Ready'
+
+    def on_identify(self, received_command, *args, **kwargs):
+        print 'Identity:', args[0][0]
 
     def list_usb_ports(self):
         """ Use the grep generator to get a list of all USB ports.
@@ -58,15 +82,19 @@ class SendAndReceiveArguments(object):
     def on_command_result(self, received_command, *args, **kwargs):
         """Callback to handle the Pin State Change success state
         """
-        print 'State received:', args[0][0]
+        print 'Echo Received:', args[0]
         print
 
     def stop(self):
         self.running = False
 
     def run(self):
-        """Main loop to send and receive data from the Arduino
+        """Main loop to send and receive data from the Arduino        
         """
+        print 'Determining device identity'
+        self.messenger.send_cmd(self.commands.index('identify'))
+        time.sleep(self.readtimeout)
+        self.messenger.feed_in_data()
         self.running = True
         while self.running:
             print 'Which command would you like to test? (1-Pin Set, 2-LCD Print) ',
@@ -85,6 +113,7 @@ class SendAndReceiveArguments(object):
                 self.messenger.send_cmd(self.commands.index('lcd_print'), c)
 
             # Check to see if any data has been received
+            time.sleep(self.readtimeout)
             self.messenger.feed_in_data()
 
 
