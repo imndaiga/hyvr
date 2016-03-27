@@ -53,11 +53,12 @@ function errorcatch {
 
 function fixlibraryreference {
 	armflag=$(uname -m | grep -o arm)
-		if [ ! -z "$armflag" ]; then
-			if [ ! -f /usr/share/arduino/libraries/Wire/twi.h ] || [ ! -f /usr/share/arduino/libraries/Wire/twi.c ]; then
-				echo "Fixing TWI library reference error"
-				cp /usr/share/arduino/libraries/Wire/utility/* /usr/share/arduino/libraries/Wire
+	if [ ! -z "$armflag" ]; then
+		if [ ! -f /usr/share/arduino/libraries/Wire/twi.h ] || [ ! -f /usr/share/arduino/libraries/Wire/twi.c ]; then
+			echo "Fixing TWI library reference error"
+			cp /usr/share/arduino/libraries/Wire/utility/* /usr/share/arduino/libraries/Wire
 		fi
+	fi
 }
 
 function firmwarecheck {
@@ -67,8 +68,9 @@ function firmwarecheck {
 		# http://askubuntu.com/questions/300744/copy-the-content-file-to-all-subdirectory-in-a-directory-using-terminal
 		cp -r sketches $homedir/data/
 		for oldfwdir in $homedir/data/sketches/*; do
-			if [ oldfwdir != "libraries" ]:
+			if [ oldfwdir != "libraries" ]; then
 				compilefw
+			fi
 		done
 		error+=(0)
 	else
