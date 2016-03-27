@@ -3,6 +3,7 @@ import os
 import time
 import serial
 import panya
+import webotmessenger
 import re
 from app import db, app
 from app.models import User, Robot
@@ -212,7 +213,8 @@ def sdpbrowse(macid=None):
 	    print("    service id:  %s "% svc["service-id"])
 	    print()
 
-def sketchupl(sketchpath):
+def sketchupl(firmware):
+	sketchpath=os.path.join(bdir,"sketches",firmware)
 	if os.path.exists(sketchpath):
 		errorkey=int(time.time())
 		cuser=g.user.nickname
@@ -235,6 +237,7 @@ def sketchupl(sketchpath):
 			return messagereturn(cuser,errorkey,None,"fullcycle")
 	else:
 		# Firmware specified does not exist, explicitly handled through messagereturn
+		print sketchpath
 		return messagereturn(None,None,31,None)
 
 def rfcommbind(rfcset,macid,alias=None,unick=None,commands=None,uid=None,flush=None,errorkey=None,cuser=None,returnerror=None):
@@ -317,15 +320,16 @@ def datasend(macid,alias,unick,commands,rfcset,uid,errorkey,cuser):
 		tbuffer = 1
 		devport = "/dev/"+str(rfcset)
 		print devport
-		ser = serial.Serial(devport, baud)
-		print ser
-		print 'Sending %s\'s commands to %s, alias:%s' % (unick,macid,alias)
-		# send and print the stored commands to the robot and terminal window respectively
-		for i in range(0,len(commands)):
-			time.sleep(tbuffer)
-			print commands[i]
-			ser.write(str(commands[i]))
-		ser.close()
+		webotmessenger.courier(devport,commands)
+		# ser = serial.Serial(devport, baud)
+		# print ser
+		# print 'Sending %s\'s commands to %s, alias:%s' % (unick,macid,alias)
+		# # send and print the stored commands to the robot and terminal window respectively
+		# for i in range(0,len(commands)):
+		# 	time.sleep(tbuffer)
+		# 	print commands[i]
+		# 	ser.write(str(commands[i]))
+		# ser.close()
 		# after downstream data transmission is completed, the attached robot is flushed.
 		rfcommbind(rfcset,macid,None,None,None,uid,"flush",errorkey,cuser,None)
 		flush = ""
@@ -423,20 +427,17 @@ def portsetup(commands):
 def parseblocks(code):
 	# this is where blockly code is parsed into a python file with the command list
 	# saved in memory for transimission.
-	response = json.dumps(code)
 	t = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 	savedir = os.path.join(sdir, g.user.nickname, 'sketches')
 	if not os.path.exists(savedir):
 		os.mkdir(savedir)
 	filename = os.path.join(savedir, t+'.py')
-	print filename
+	print 'Saving python code to ',filename
 	target = open(filename,'w')
 	target.write(code)
 	target.close()
 	execfile(filename,globals(),locals())
-	# panya.commands.append("COUNT="+str(locals()['count']+1))
 	sessionresponse = portsetup(panya.commands)
-
 	panya.commands = []
 	return sessionresponse
 

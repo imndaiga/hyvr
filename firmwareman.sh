@@ -68,7 +68,7 @@ function firmwarecheck {
 		# http://askubuntu.com/questions/300744/copy-the-content-file-to-all-subdirectory-in-a-directory-using-terminal
 		cp -r sketches $homedir/data/
 		for oldfwdir in $homedir/data/sketches/*; do
-			if [ oldfwdir != "libraries" ]; then
+			if [ "$oldfwdir" != "libraries" ]; then
 				compilefw
 			fi
 		done
@@ -77,6 +77,9 @@ function firmwarecheck {
 		echo "Checking for firmware updates"
 		for newfwdir in sketches/*; do
 			nfwbasename=$(basename $newfwdir)
+			if [ "$nfwbasename" = "libraries" ]; then
+				break
+			fi
 			echo "checking $nfwbasename firmware"
 			for newfw in $newfwdir/*; do
 				nfirmware=$(basename $newfw)

@@ -12,7 +12,7 @@ from serial.tools import list_ports
 
 class SendAndReceiveArguments(object):
 
-    def __init__(self):
+    def __init__(self,port=None):
         # make sure this baudrate matches the baudrate on the Arduino
         self.running = False
         # this method list is matched with the enumerator type on the Arduino sketch
@@ -26,27 +26,32 @@ class SendAndReceiveArguments(object):
                          ]
 
         try:
-            print 'Ensure that the right firmware is loaded to the webot'
-            print 'Select Serial Interface (USB=1,BLUETOOTH=2) >',
-            selinterface=raw_input()
-            if (selinterface == "1"):
-                print 'Set Baud=115200, readtimeout=0.1'
-                self.baud = 115200
-                self.readtimeout = 0.1
-                print 'USB interface selected'
-                # try to open the first available usb port
-                self.port_name = self.list_usb_ports()[0][0]
-            elif (selinterface == "2"):
-                print 'Set Baud=9600, readtimeout=0.5'
+            if (port is None):
+                print 'Ensure that the right firmware is loaded to the webot'
+                print 'Select Serial Interface (USB=1,BLUETOOTH=2) >',
+                selinterface=raw_input()
+                if (selinterface == "1"):
+                    print 'Set Baud=115200, readtimeout=0.1'
+                    self.baud = 115200
+                    self.readtimeout = 0.1
+                    print 'USB interface selected'
+                    # try to open the first available usb port
+                    self.port_name = self.list_usb_ports()[0][0]
+                elif (selinterface == "2"):
+                    print 'Set Baud=9600, readtimeout=0.5'
+                    self.baud = 9600
+                    self.readtimeout = 0.5
+                    print 'Bluetooth interface selected (/dev/rfcomm0)'
+                    self.port_name = "/dev/rfcomm0"
+                else:
+                    print 'Defaulting to USB interface'
+                    # try to open the first available usb port
+                    self.port_name = self.list_usb_ports()[0][0]
+            else:
+                print 'Setting up bluetooth courier configuration'
                 self.baud = 9600
                 self.readtimeout = 0.5
-                print 'Bluetooth interface selected'
-                self.port_name = "/dev/rfcomm0"
-            else:
-                print 'Defaulting to USB interface'
-                # try to open the first available usb port
-                self.port_name = self.list_usb_ports()[0][0]
-
+                self.port_name = port
             self.serial_port = serial.Serial(self.port_name, self.baud, timeout=0)
         except (serial.SerialException, IndexError):
             raise SystemExit('Could not open serial port.')
@@ -116,6 +121,15 @@ class SendAndReceiveArguments(object):
             time.sleep(self.readtimeout)
             self.messenger.feed_in_data()
 
+    def relay(self,blocklycommands):
+        self.messenger.send_cmd(self.commands.index('identify'))
+        time.sleep(self.readtimeout)
+        self.messenger.feed_in_data()
+
+def courier(devport,blocklycommands):
+    print 'Webot Courier Service Started: ', devport, blocklycommands
+    send_and_receive_args = SendAndReceiveArguments(port=devport)
+    send_and_receive_args.relay(blocklycommands)
 
 if __name__ == '__main__':
     send_and_receive_args = SendAndReceiveArguments()

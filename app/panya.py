@@ -1,4 +1,3 @@
-import collections
 
 commands = []
 
@@ -6,38 +5,36 @@ class Panya(object):
 	def __init__(self):
 		pass
 
-	def PanyaMove(self, longdir=None):
-		self.long = longdir
-		storecomms("LONG",self.long)
-		# return self.long
-
-	def PanyaTurn(self, latdir=None):
-		self.lat = latdir
-		storecomms("LAT",self.lat)
-		# return self.lat
-
 	def PanyaStop(self):
-		storecomms("H","Stop")
-		# return self.instruct
+		storecomms("function_stop;")
 
-	def PanyaSetSpeed(self, speed=None):
-		self.speed = speed
-		storecomms("S",self.speed)
-		# return self.speed
-
-	def PanyaDelay(self, duration=None):
+	def PanyaMotors(self, direction, duration):
+		self.direction = direction
 		self.duration = duration
-		storecomms("D",self.duration)
-		# return self.duration
+		# self.speed = speed
+		storecomms("motor_start",self.direction,self.direction,";")
 
-	def PanyaPin(self, pin=None, state=None):
+	def PanyaDelay(self, pauseduration):
+		self.delay = pauseduration
+		storecomms("function_pause",self.delay,";")
+
+	def PanyaPin(self, pin, state):
 		self.pin = pin
 		self.state = state
-		storecomms("P/S",self.pin+","+self.state)
-		# return self.pin + ":" + self.state
+		storecomms("pin_set_state",self.pin,self.state,";")
 
-def storecomms(arg1=None, arg2=None):
-	commands.append(arg1+"="+arg2)
+	def PanyaLCD(self, msg=None, rgb=None):
+		self.msg = msg
+		self.lcdrgb = rgb
+		storecomms("lcd_print",self.msg,self.lcdrgb,";")
+
+	def PanyaRepeat(self, iterations):
+		self.repeat = iterations
+		storecomms("repeat",self.repeat,";")
+
+def storecomms(*args):
+	for arg in args:
+		commands.append(arg)
 
 def main():
 	pass
