@@ -2,7 +2,6 @@
 import os
 import time
 import serial
-import panya
 import webotmessenger
 import re
 from app import db, app
@@ -30,6 +29,8 @@ bdir = app.config["BASE"]
 sdir = app.config["DATA"]
 # search result from bluetooth legacy discovery stored in resp list
 resp = []
+# webotcommands stores all the blockly python code parsed in from Panya Class
+webotcommands = ""
 
 # determine which platform this app package is running on and set the
 # required shell/bash script paths. these scripts manage all the
@@ -52,6 +53,39 @@ else:
 # 	devices = service.discover(2)
 # 	for addr, name in devices.items():
 # 		resp.append({'mac*':str(addr),'name*':str(name)})
+
+class Panya(object):
+
+	def __init__(self):
+		pass
+
+	def PanyaStop(self):
+		packcommands(''.join("function_stop"))
+
+	def PanyaMotors(self, direction, duration):
+		self.direction = direction
+		self.duration = duration
+		# self.speed = speed
+		packcommands(','.join(["motor_start",str(self.direction),str(self.direction)]))
+
+	def PanyaDelay(self, pauseduration):
+		self.delay = pauseduration
+		packcommands(','.join(["function_pause",str(self.delay)]))
+
+	def PanyaPin(self, pin, state=None, pwmvalue=None):
+		self.pin = pin
+		self.state = state
+		self.pwmvalue = pwmvalue
+		packcommands(','.join(["pin_set_state",str(self.pin),str(self.state),str(self.pwmvalue)]))
+
+	def PanyaLCD(self, msg=None, rgb=None):
+		self.msg = msg
+		self.lcdrgb = rgb
+		packcommands(','.join(["lcd_print",str(self.msg),str(self.lcdrgb)]))
+
+	def PanyaRepeat(self, iterations):
+		self.repeat = iterations
+		packcommands(','.join(["repeat",str(self.repeat)]))
 
 def messagereturn(cuser,errorkey,stricterror=None,fullcycle=None):
 	messresp = defaultdict(list)
@@ -424,9 +458,15 @@ def portsetup(commands):
 	# sdpbrowse(robot.macid) # HC06 and HC05 bluetooth modules don't advertise an SDP interface. Uncomment if
 	# using a module that does. Bug number will be attached to this issue.
 
-def parseblocks(code):
+def packcommands(*args):
+	global webotcommands
+	for arg in args:
+		webotcommands += arg+";"
+
+def parseblocks(blocklycode):
 	# this is where blockly code is parsed into a python file with the command list
 	# saved in memory for transimission.
+	panya=Panya()
 	t = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 	savedir = os.path.join(sdir, g.user.nickname, 'sketches')
 	if not os.path.exists(savedir):
@@ -434,11 +474,17 @@ def parseblocks(code):
 	filename = os.path.join(savedir, t+'.py')
 	print 'Saving python code to ',filename
 	target = open(filename,'w')
-	target.write(code)
+	target.write(blocklycode)
 	target.close()
-	execfile(filename,globals(),locals())
-	sessionresponse = portsetup(panya.commands)
-	panya.commands = []
+	# We now compile the generated python strings in the blocklycode
+	# into bytecode and execute the resultant .pyc through the exec function
+	# in our current namespace (I can't figure out a better way to have the
+	# panya class instance variables accessible)
+	# Read about caveats here - http://lucumr.pocoo.org/2011/2/1/exec-in-python/
+	compiledcode = compile(blocklycode,'<string>','exec')
+	exec compiledcode
+	print webotcommands
+	sessionresponse = portsetup(webotcommands)
 	return sessionresponse
 
 if __name__ == '__main__':

@@ -642,10 +642,11 @@ function linuxpandb {
 					echo "$uid already bound to /dev/$devassgn"
 					echo "Performing pairing status validation"
 					if [ ! -z $hciuid ]; then
+						echo "HCI device is $hciuid hcinumber is $hcinum"
 						if [ -f /var/lib/bluetooth/$hciuid/linkkeys ]; then
 							keychck=$(cat /var/lib/bluetooth/$hciuid/linkkeys | grep -o $uid)
 							if [ -z "$keychck" ]; then
-								echo 1234 | bluez-simple-agent $hcinum $uid
+								echo 1234 | bluez-simple-agent $hciuid $uid
 								exstat=$?
 								# http://stackoverflow.com/questions/748445/shell-status-codes-in-make
 								if [ "$exstat" = "0" ]; then 

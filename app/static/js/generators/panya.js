@@ -23,52 +23,34 @@ goog.provide('Blockly.Python.variables');
 
 goog.require('Blockly.Python');
 
-Blockly.Python['panya_pin'] = function(block) {
+Blockly.Python['panya_pin_digital'] = function(block) {
   var value_pin = Blockly.Python.valueToCode(block, 'pin', Blockly.Python.ORDER_NONE) || '0';
   var dropdown_state = block.getFieldValue('logicstate');
-  var code = 'Panya.PanyaPin('+"\'"+value_pin+''+"\'"+"\,"+"\'"+dropdown_state+""+"\')\n";
-  if (!Blockly.Python.definitions_['import_panya']){
-  Blockly.Python.definitions_['import_panya'] = 'import panya\nPanya=panya.Panya()';
-  }
+  var code = 'panya.PanyaPin('+"\'"+value_pin+''+"\'"+"\,"+"\'"+dropdown_state+""+"\'"+"\,"+"None"+")\n";
   return code;
 };
 
-Blockly.Python['panya_stop'] = function(block) {
+Blockly.Python['panya_motors'] = function(block) {
+  var dropdown_direction = block.getFieldValue('DIRECTION');
+  var value_duration = Blockly.Python.valueToCode(block, 'DURATION', Blockly.Python.ORDER_NONE) || '0';
+  var code = 'panya.PanyaMotors('+"\'"+dropdown_direction+''+"\'"+"\,"+"\'"+value_duration+""+"\')\n";
+  return code;
+};
+
+Blockly.Python['panya_lcd_print'] = function(block) {
+  var text_lcdprint = block.getFieldValue('LCDPRINT');
+  var code = 'panya.PanyaLCD('+"\'"+text_lcdprint+"\'"+"\,"+"None"+")\n";
+  return code;
+};
+
+Blockly.Python['panya_lcd_rgb'] = function(block) {
+  var colour_lcdcolour = block.getFieldValue('LCDCOLOUR');
+  var code = 'panya.PanyaLCD('+"None"+"\,"+"\'"+colour_lcdcolour+"\')\n";
+  return code;
+};
+
+Blockly.Python['panya_reset'] = function(block) {
   // Stop the panyabot. Change the value of code to the appropriate python function
-  var code = 'Panya.PanyaStop()\n';
-  if (!Blockly.Python.definitions_['import_panya']) {
-	Blockly.Python.definitions_['import_panya'] = 'import panya\nPanya=panya.Panya()';
-	}
-  return code;
-};
-
-Blockly.Python['panya_move'] = function(block) {
-  // Passed argument is the time for which we want panya to move
-  var dropdown_longdir = block.getFieldValue('longdir');
-  // Move the translate the panyabot through the given displacement vector
-  var code = 'Panya.PanyaMove('+"\'"+dropdown_longdir+""+"\')\n";
-  if (!Blockly.Python.definitions_['import_panya']){
-	Blockly.Python.definitions_['import_panya'] = 'import panya\nPanya=panya.Panya()';
-	}
-  return code;
-};
-
-Blockly.Python['panya_turn'] = function(block) {
-  var dropdown_latdir = block.getFieldValue('latdir');
-  // Turn the panyabot in the specified direction
-  var code = 'Panya.PanyaTurn('+"\'"+dropdown_latdir+""+"\')\n";
-  if (!Blockly.Python.definitions_['import_panya']) {
-	Blockly.Python.definitions_['import_panya'] = 'import panya\nPanya=panya.Panya()';
-	}
-  return code;
-};
-
-Blockly.Python['panya_set_speed'] = function(block) {
-  var value_speed = Blockly.Python.valueToCode(block, 'SPEED', Blockly.Python.ORDER_NONE) || '0';
-  // Set the panyabot's speed to the given value
-  var code = 'Panya.PanyaSetSpeed('+"\'"+value_speed+""+"\')\n";
-  if (!Blockly.Python.definitions_['import_panya']) {
-	Blockly.Python.definitions_['import_panya'] = 'import panya\nPanya=panya.Panya()';
-	}
+  var code = 'panya.PanyaReset()\n';
   return code;
 };

@@ -22,7 +22,8 @@ class SendAndReceiveArguments(object):
                          'pin_set_state',
                          'command_result',
                          'lcd_print',
-                         'identify'
+                         'identify',
+                         'motor_start',
                          ]
 
         try:
@@ -122,9 +123,22 @@ class SendAndReceiveArguments(object):
             self.messenger.feed_in_data()
 
     def relay(self,blocklycommands):
+        commandlist = []
+        commandlist = blocklycommands.split(';')
         self.messenger.send_cmd(self.commands.index('identify'))
         time.sleep(self.readtimeout)
         self.messenger.feed_in_data()
+        commax=len(commandlist)
+        # for some reason the last element is an empty string, the following
+        # statements clean that out
+        validcommandlist = [validcommand for validcommand in commandlist[0:commax-1]]
+        # print validcommandlist
+        for commandset in validcommandlist:
+            command = []
+            command = commandset.split(',')
+            print command[0]
+            argnumber=len(command[1:])
+            # self.messenger.send_cmd(self.commands.index(command[0]),)
 
 def courier(devport,blocklycommands):
     print 'Webot Courier Service Started: ', devport, blocklycommands
