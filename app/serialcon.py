@@ -66,7 +66,7 @@ class Panya(object):
 		self.direction = direction
 		self.duration = duration
 		# self.speed = speed
-		packcommands(','.join(["motor_start",str(self.direction),str(self.direction)]))
+		packcommands(','.join(["motor_start",str(self.direction),str(self.duration)]))
 
 	def PanyaDelay(self, pauseduration):
 		self.delay = pauseduration
@@ -466,6 +466,7 @@ def packcommands(*args):
 def parseblocks(blocklycode):
 	# this is where blockly code is parsed into a python file with the command list
 	# saved in memory for transimission.
+	global webotcommands
 	panya=Panya()
 	t = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 	savedir = os.path.join(sdir, g.user.nickname, 'sketches')
@@ -485,6 +486,7 @@ def parseblocks(blocklycode):
 	exec compiledcode
 	print webotcommands
 	sessionresponse = portsetup(webotcommands)
+	webotcommands = ""
 	return sessionresponse
 
 if __name__ == '__main__':

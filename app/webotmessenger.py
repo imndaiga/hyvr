@@ -137,8 +137,10 @@ class SendAndReceiveArguments(object):
             command = []
             command = commandset.split(',')
             print command[0]
-            argnumber=len(command[1:])
-            # self.messenger.send_cmd(self.commands.index(command[0]),)
+            # argnumber=len(command[1:])
+            self.messenger.send_cmd(self.commands.index(command[0]),*command[1:])
+            time.sleep(self.readtimeout)
+            self.messenger.feed_in_data()
 
 def courier(devport,blocklycommands):
     print 'Webot Courier Service Started: ', devport, blocklycommands
