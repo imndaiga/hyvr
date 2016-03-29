@@ -12,6 +12,7 @@ sudo apt-get update && apt-get install -y \
     arduino-mk \
     wget \
     ca-certificates \
+    picocom \
     make
 
 echo "Setting up runtime environment"

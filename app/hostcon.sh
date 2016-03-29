@@ -586,6 +586,7 @@ function linuxpandb {
 		echo "Checking connection status of" $uid "to" $host "host"
 		# bluetooth ping(ONCE) the bluetooth client to confirm it's up
 		hciuid=$(hciconfig | grep -o ..:..:..:..:..:..)
+		hcinum=$(hciconfig | grep -o hci.)
 		if l2ping "$uid" -c 1; then
 			echo "Pinging" $uid "to ensure device is up"
 			# devfind conditional checks if submitted UID is already registered on rfcomm,
@@ -599,7 +600,7 @@ function linuxpandb {
 					if [ -f /var/lib/bluetooth/$hciuid/linkkeys ]; then
 						keychck=$(cat /var/lib/bluetooth/$hciuid/linkkeys | grep -o $uid)
 						if [ -z "$keychck" ]; then
-							echo 1234 | bluez-simple-agent $hciuid $uid
+							echo 1234 | bluez-simple-agent $hcinum $uid
 							exstat=$?
 							# http://stackoverflow.com/questions/748445/shell-status-codes-in-make
 							if [ "$exstat" = "0" ]; then 
@@ -642,11 +643,10 @@ function linuxpandb {
 					echo "$uid already bound to /dev/$devassgn"
 					echo "Performing pairing status validation"
 					if [ ! -z $hciuid ]; then
-						echo "HCI device is $hciuid hcinumber is $hcinum"
 						if [ -f /var/lib/bluetooth/$hciuid/linkkeys ]; then
 							keychck=$(cat /var/lib/bluetooth/$hciuid/linkkeys | grep -o $uid)
 							if [ -z "$keychck" ]; then
-								echo 1234 | bluez-simple-agent $hciuid $uid
+								echo 1234 | bluez-simple-agent $hcinum $uid
 								exstat=$?
 								# http://stackoverflow.com/questions/748445/shell-status-codes-in-make
 								if [ "$exstat" = "0" ]; then 

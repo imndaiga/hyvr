@@ -29,6 +29,7 @@ RUN sudo apt-get update \
     arduino-mk \
     wget \
     ca-certificates \
+    picocom \
     make \
   && apt-get clean
 
