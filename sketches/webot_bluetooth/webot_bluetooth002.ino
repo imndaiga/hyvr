@@ -40,6 +40,8 @@ enum
   kCommandResult     , // Command to report successful command execution
   kLcdPrint          , // Command to request strings to be written to LCD
   kIdentify          , // Command to both identify exact device and for watchdog to differentiate multiple serial
+  kMotorStart        , // Command to move attached motors for a specified duration
+  
 };
 
 // ------------------  C A L L B A C K S -----------------------
@@ -79,14 +81,52 @@ void PinSetState()
 void LcdPrint()
 {
   String lcdString = cmdMessenger.readStringArg();
-  lcd.clear();
-  //  lcd.print does some string preprocessing before outputting
-  //  to the lcd unlike lcd.write which would error out with
-  //  the lcdString object.
-  lcd.print(lcdString);
-  cmdMessenger.sendCmdStart(kCommandResult);
-  cmdMessenger.sendCmdArg(lcdString);
-  cmdMessenger.sendCmdEnd();
+  int r = cmdMessenger.readInt16Arg();
+  int g = cmdMessenger.readInt16Arg();
+  int b = cmdMessenger.readInt16Arg();
+
+  if ( r || b || g ){
+    if (lcdString != "None") {
+      lcd.clear();
+      //  lcd.print does some string preprocessing before outputting
+      //  to the lcd unlike lcd.write which would error out with
+      //  the lcdString object.
+      lcd.print(lcdString);
+      lcd.setRGB(r, g, b);
+      cmdMessenger.sendCmdStart(kCommandResult);
+      cmdMessenger.sendCmdArg(lcdString);
+      cmdMessenger.sendCmdArg(r);
+      cmdMessenger.sendCmdArg(g);
+      cmdMessenger.sendCmdArg(b);
+      cmdMessenger.sendCmdEnd();
+    }
+    else {
+      lcd.setRGB(r, g, b);
+      cmdMessenger.sendCmdStart(kCommandResult);
+      cmdMessenger.sendCmdArg(r);
+      cmdMessenger.sendCmdArg(g);
+      cmdMessenger.sendCmdArg(b);
+      cmdMessenger.sendCmdEnd();
+    }
+  }
+  else {
+    if (lcdString != "None") {
+      lcd.clear();
+      //  lcd.print does some string preprocessing before outputting
+      //  to the lcd unlike lcd.write which would error out with
+      //  the lcdString object.
+      lcd.print(lcdString);
+      cmdMessenger.sendCmdStart(kCommandResult);
+      cmdMessenger.sendCmdArg(lcdString);
+      cmdMessenger.sendCmdEnd();
+    }
+    else {
+      lcd.clear();
+      cmdMessenger.sendCmdStart(kCommandResult);
+      cmdMessenger.sendCmdArg("No arguments found");
+      cmdMessenger.sendCmdEnd();
+    }
+  }
 }
 
 // Commands we send from the PC and want to receive on the Arduino.

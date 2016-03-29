@@ -115,12 +115,30 @@ class SendAndReceiveArguments(object):
             if (userchoice == "2"):
                 print 'Enter LCD String > ',
                 c = raw_input()
-                print 'Sending: {}'.format(c)
-                self.messenger.send_cmd(self.commands.index('lcd_print'), c)
+                print 'Enter LCD Color hexcode >',
+                d = raw_input()
+                if (d != ""):
+                    if (c != ""):
+                        e = self.hex_to_rgb(d)
+                        print 'Sending: {}, {}'.format(c, e)
+                        self.messenger.send_cmd(self.commands.index('lcd_print'), c, *e)
+                    else:
+                        e = self.hex_to_rgb(d)
+                        print 'Sending: {}, {}'.format("None", e)
+                        self.messenger.send_cmd(self.commands.index('lcd_print'), "None", *e)
+                else:
+                    print 'Sending: {}'.format(c)
+                    self.messenger.send_cmd(self.commands.index('lcd_print'), c)
 
             # Check to see if any data has been received
             time.sleep(self.readtimeout)
             self.messenger.feed_in_data()
+
+    def hex_to_rgb(self,hexvalue):
+        value = hexvalue.lstrip('#')
+        lv = len(value)
+        return list(int(value[i:i + lv // 3], 16) for i in range (0, lv, lv // 3))
+
 
     def relay(self,blocklycommands):
         commandlist = []
@@ -137,7 +155,19 @@ class SendAndReceiveArguments(object):
             command = []
             command = commandset.split(',')
             print command[0]
-            # argnumber=len(command[1:])
+            
+            if (command[0] == "lcd_print"):
+                print 'Working with',command[1], command[2]
+                if (command[2] != "None"):
+                    print 'Hex color codes received'
+                    rgblist = (self.hex_to_rgb(command[2]))
+                    command.pop(2)
+                    command = command + rgblist
+                if (command[1] == "None"):
+                    print 'No LCD String received'
+                    command[1] = "None"
+
+            print command
             self.messenger.send_cmd(self.commands.index(command[0]),*command[1:])
             time.sleep(self.readtimeout)
             self.messenger.feed_in_data()
