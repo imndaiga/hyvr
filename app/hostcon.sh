@@ -729,7 +729,7 @@ function errorcatch {
 				"28" ) echo "error 28: no Arduinos attached to host";;
 				"29" ) echo "error 29: no host HCI interfaces available";;
 				"30" ) echo "error 30: preconditions test failed";;
-				"31" ) echo "error 36: Port is permanently closed";;
+				"31" ) echo "error 31: Port is permanently closed";;
 			esac
 			if [ "$e" != 0 ]; then
 				errorcount=$(($errorcount+1))

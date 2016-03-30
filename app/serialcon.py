@@ -29,7 +29,7 @@ bdir = app.config["BASE"]
 sdir = app.config["DATA"]
 # search result from bluetooth legacy discovery stored in resp list
 resp = []
-# webotcommands stores all the blockly python code parsed in from Panya Class
+# webotcommands stores all the blockly python code parsed in from Webot Class
 webotcommands = ""
 
 # determine which platform this app package is running on and set the
@@ -87,7 +87,16 @@ class Panya(object):
 		self.repeat = iterations
 		packcommands(','.join(["repeat",str(self.repeat)]))
 
+def packcommands(*args):
+	global webotcommands
+	for arg in args:
+		webotcommands += arg+";"
+
 def messagereturn(cuser,errorkey,stricterror=None,fullcycle=None):
+	# This function returns any and all error codes returned per command upload cycle
+	# errordict matches errors indicated in hostcon errorcatch function
+	# We are using a defaultdict because it allows for ordered lists to be created based on
+	# element declarations.
 	messresp = defaultdict(list)
 	errordict = [{ "error":1, "info":"HCI reset error" },{ "error":2, "info":"HCI reset error"},{ "error":3, "info":"No HCI available"},
 					{ "error":4, "info":"HCI switch error"},{ "error":5, "info":"HCI switch error"},{ "error":6, "info":"HCI switch error"},
@@ -99,7 +108,7 @@ def messagereturn(cuser,errorkey,stricterror=None,fullcycle=None):
 					{ "error":22, "info":"Device not found"},{ "error":23, "info":"No HCI interfaces up"},{ "error":24, "info":"No HCI available"},{ "error":25, "info": "No HCI available"},
 					{ "error":26, "info":"No HCI available"},{ "error":27, "info":"No USB devices found"},{ "error":28, "info":"No Arduinos found"},{ "error":29, "info":"No HCI available"},
 					{ "error":30, "info":"Bluetooth setup error"},{ "error":31, "info":"Port is permanently closed"}, { "error":32, "info":"No HCI available"},
-					{ "error":33, "info":"Couldn't send data"},{ "error":34, "info":"Firmware does not exist"}
+					{ "error":33, "info":"Couldn't send data"},{ "error":34, "info":"Firmware does not exist"},{ "error":35, "info":"Queueing timeout"},{ "error":36, "info":"Webot status key error"}
 					]
 	if (stricterror==None) and (fullcycle==None):
 		print 'starting halfcycle error logging'
@@ -156,6 +165,8 @@ def messagereturn(cuser,errorkey,stricterror=None,fullcycle=None):
 				messresp["info"].append(err["info"])
 				errfound=True
 				return json.dumps(messresp)
+
+# ------------ F I R M W A R E  U P L O A D  &  B L U E T O O T H  I N Q U I R Y -----------------
 
 def leginquire():
 	# bluetooth legacy discovery api endpoint. This endpoint is used by the
@@ -225,7 +236,7 @@ def sdpbrowse(macid=None):
 	    print()
 
 def sketchupl(firmware):
-	sketchpath=os.path.join(bdir,"sketches",firmware)
+	sketchpath=os.path.join(sdir,"sketches",firmware)
 	if os.path.exists(sketchpath):
 		errorkey=int(time.time())
 		cuser=g.user.nickname
@@ -250,6 +261,24 @@ def sketchupl(firmware):
 		# Firmware specified does not exist, explicitly handled through messagereturn
 		print sketchpath
 		return messagereturn(None,None,34,None)
+
+# -------- B L U E T O O T H   P O R T  S E T U P  &  D A T A  T R A N S M I S S I O N ----------
+
+def datasend(macid,alias,unick,commands,rfcset,uid,errorkey,cuser):
+	# this is the command transport mechanism.
+	try:
+		baud = 9600
+		tbuffer = 1
+		devport = "/dev/"+str(rfcset)
+		print devport
+		webotmessenger.courier(devport,commands)
+		rfcommbind(rfcset,macid,None,None,None,uid,"flush",errorkey,cuser,None)
+		flush = ""
+	except serial.SerialException, e:
+		print 'Port %s not available.' %(devport)
+		print 'Will release and unpair from %s' % (uid)
+		print str(e)
+		rfcommbind(rfcset,macid,None,None,None,uid,"flush",errorkey,cuser,33)
 
 def rfcommbind(rfcset,macid,alias=None,unick=None,commands=None,uid=None,flush=None,errorkey=None,cuser=None,returnerror=None):
 	# this function takes the supplied macid passing it to the bash/shell script to
@@ -319,37 +348,6 @@ def rfcommbind(rfcset,macid,alias=None,unick=None,commands=None,uid=None,flush=N
 				print "%s:%s" %(robot.alias,robot.status)
 			return messagereturn(cuser,errorkey,returnerror,"fullcycle")
 
-def datasend(macid,alias,unick,commands,rfcset,uid,errorkey,cuser):
-	# this is the command transport mechanism. A serial port is opened at the rfcset
-	# declared devport and commands transmitted using the pyserial library.
-	# currently in testing, default preset values are sent to the attached robot that
-	# must be running the arduino panyabot sketch.
-	# future feature to use the standard firmata library to have bidirectional
-	# transmission of data (commands and sensor values).
-	try:
-		baud = 9600
-		tbuffer = 1
-		devport = "/dev/"+str(rfcset)
-		print devport
-		webotmessenger.courier(devport,commands)
-		# ser = serial.Serial(devport, baud)
-		# print ser
-		# print 'Sending %s\'s commands to %s, alias:%s' % (unick,macid,alias)
-		# # send and print the stored commands to the robot and terminal window respectively
-		# for i in range(0,len(commands)):
-		# 	time.sleep(tbuffer)
-		# 	print commands[i]
-		# 	ser.write(str(commands[i]))
-		# ser.close()
-		# after downstream data transmission is completed, the attached robot is flushed.
-		rfcommbind(rfcset,macid,None,None,None,uid,"flush",errorkey,cuser,None)
-		flush = ""
-	except serial.SerialException, e:
-		print 'Port %s not available.' %(devport)
-		print 'Will release and unpair from %s' % (uid)
-		print str(e)
-		rfcommbind(rfcset,macid,None,None,None,uid,"flush",errorkey,cuser,33)
-
 def rfcommset(robots):
 	# this function manages the allocation of rfcomm port numbers to each incoming request.
 	# prstlist stores the previously allocated dev numbers that haven't been declared inactive.
@@ -389,13 +387,15 @@ def portsetup(commands):
 	# if there are, the current request is queued until such a time that all
 	# prior tranmissions are completed.
 	Qflag = False
-	Tout = False
 	Qout = False
 	user = User.query.filter_by(nickname=g.user.nickname).first()
 	robot = Robot.query.filter_by(user_id=user.id).first()
 	robots = Robot.query.all()
 	for rob in robots:
 		print "%s:%s" %(robot.alias,robot.status)
+		# Check all robot status values for device dev paths. If the current
+		# robot status check fails on the robot in session, clean out the value,
+		# report it as an error state and continue to binding
 		if (rob.status != "inactive") and (robot.alias != rob.alias):
 			# Wait for 5 seconds and check again if a host-client bluetooth connection is up
 			# If elapsed_time is greater than 10 seconds then timeout the process and prompt
@@ -411,7 +411,7 @@ def portsetup(commands):
 				elapsed_time = time.time() - queue_start
 			if (elapsed_time > 5) and not Qout:
 				print 'Port setup timeout'
-				Tout = True
+				return messagereturn(None,None,35,None)
 		elif (rob.status != "inactive") and (robot.alias == rob.alias):
 				Qout=True
 				print 'Robot key-value pair found in error state'
@@ -422,11 +422,12 @@ def portsetup(commands):
 					print "%s:%s" %(robot.alias,robot.status)
 		else:
 			Qout = True
-
-		if Qout and not Tout:
+		# If a queue slot has been found, flag for binding process to proceed.
+		if Qout:
 			Qflag = False
 		else:
 			print "Please check database value for the key %s:%s" %(rob.alias,rob.status)
+			return messagereturn(None,None,36,None)
 	if not Qflag:
 		rfcset=rfcommset(robots)
 		robot.status=rfcset
@@ -434,11 +435,6 @@ def portsetup(commands):
 		return rfcommbind(str(rfcset),str(robot.macid),str(robot.alias),str(user.nickname),str(commands),str(user.id))
 	# sdpbrowse(robot.macid) # HC06 and HC05 bluetooth modules don't advertise an SDP interface. Uncomment if
 	# using a module that does. Bug number will be attached to this issue.
-
-def packcommands(*args):
-	global webotcommands
-	for arg in args:
-		webotcommands += arg+";"
 
 def parseblocks(blocklycode):
 	# this is where blockly code is parsed into a python file with the command list
@@ -457,7 +453,7 @@ def parseblocks(blocklycode):
 	# We now compile the generated python strings in the blocklycode
 	# into bytecode and execute the resultant .pyc through the exec function
 	# in our current namespace (I can't figure out a better way to have the
-	# panya class instance variables accessible)
+	# webot class instance variables accessible)
 	# Read about caveats here - http://lucumr.pocoo.org/2011/2/1/exec-in-python/
 	compiledcode = compile(blocklycode,'<string>','exec')
 	exec compiledcode
