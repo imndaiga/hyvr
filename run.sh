@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
-echo "Trying to mount peripheral devices"
-mount -t devtmpfs none /dev
-udevd &
-udevadm trigger
+echo "Restarting device bus and bluetooth services"
 service dbus restart
 service bluetooth restart
 

@@ -172,10 +172,12 @@ class SendAndReceiveArguments(object):
             time.sleep(self.readtimeout)
             self.messenger.feed_in_data()
 
+
 def courier(devport,blocklycommands):
     print 'Webot Courier Service Started: ', devport, blocklycommands
     send_and_receive_args = SendAndReceiveArguments(port=devport)
     send_and_receive_args.relay(blocklycommands)
+    send_and_receive_args.serial_port.close()
 
 if __name__ == '__main__':
     send_and_receive_args = SendAndReceiveArguments()

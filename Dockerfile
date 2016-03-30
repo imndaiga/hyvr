@@ -8,9 +8,6 @@ FROM resin/raspberrypi-systemd:wheezy
 # File Author / Maintainer
 MAINTAINER Wachira Ndaiga
 
-# Expose ports
-EXPOSE 5000
-
 # Create environment variables
 ENV INITSYSTEM on
 ENV XDG_RUNTIME_DIR /run/user/%I
@@ -23,6 +20,7 @@ RUN sudo apt-get update \
     python-pip \
     usbutils \
     bluez \
+    bluez-utils \
     python-gobject \
     python-bluez \
     nano \
@@ -30,6 +28,7 @@ RUN sudo apt-get update \
     wget \
     ca-certificates \
     picocom \
+    lsof \
     make \
   && apt-get clean
 

@@ -13,6 +13,7 @@ sudo apt-get update && apt-get install -y \
     wget \
     ca-certificates \
     picocom \
+    lsof \
     make
 
 echo "Setting up runtime environment"

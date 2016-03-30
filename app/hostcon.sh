@@ -587,8 +587,9 @@ function linuxpandb {
 		# bluetooth ping(ONCE) the bluetooth client to confirm it's up
 		hciuid=$(hciconfig | grep -o ..:..:..:..:..:..)
 		hcinum=$(hciconfig | grep -o hci.)
+		echo "Pinging" $uid "to ensure device is up"
 		if l2ping "$uid" -c 1; then
-			echo "Pinging" $uid "to ensure device is up"
+			echo $uid "device is up"
 			# devfind conditional checks if submitted UID is already registered on rfcomm,
 			# if not it pairs to and binds the passed macid variable
 			devfind=$(rfcomm | grep $uid)
@@ -641,27 +642,39 @@ function linuxpandb {
 				devassgnchck=$(echo $devfind | grep -o "rfcomm.")
 				if [ "$devassgnchck" = "$devassgn" ]; then
 					echo "$uid already bound to /dev/$devassgn"
-					echo "Performing pairing status validation"
-					if [ ! -z $hciuid ]; then
-						if [ -f /var/lib/bluetooth/$hciuid/linkkeys ]; then
-							keychck=$(cat /var/lib/bluetooth/$hciuid/linkkeys | grep -o $uid)
-							if [ -z "$keychck" ]; then
-								echo 1234 | bluez-simple-agent $hcinum $uid
-								exstat=$?
-								# http://stackoverflow.com/questions/748445/shell-status-codes-in-make
-								if [ "$exstat" = "0" ]; then 
-									echo "$uid paired"
-								else
-									# bluetooth pairing to $uid failed
-									error+=(20)
-								fi
-							else
-								echo "$uid previously paired"
-							fi
-						fi
+					# Determine if port is being used by a separate process
+					# http://unix.stackexchange.com/questions/194067/robust-bluetooth-serial-port-console-tty
+					echo "Checking if /dev/$devassgn is in use by another process"
+					rfcomm show /dev/$devassgn 2> /dev/null | grep "channel 1 closed" | grep "tty-attached"
+					exstat=$?
+					# http://stackoverflow.com/questions/748445/shell-status-codes-in-make
+					if [ "$exstat" = "0" ]; then 
+						echo "Port is in use by PID:" $(lsof -t /dev/$devassgn)
+						echo "Process is:" $(ps $(lsof -t /dev/$devassgn))
+						error+=(31)
 					else
-						# no host HCI interfaces available
-						error+=(26)
+						echo "Performing pairing status validation"
+						if [ ! -z $hciuid ]; then
+							if [ -f /var/lib/bluetooth/$hciuid/linkkeys ]; then
+								keychck=$(cat /var/lib/bluetooth/$hciuid/linkkeys | grep -o $uid)
+								if [ -z "$keychck" ]; then
+									echo 1234 | bluez-simple-agent $hcinum $uid
+									exstat=$?
+									# http://stackoverflow.com/questions/748445/shell-status-codes-in-make
+									if [ "$exstat" = "0" ]; then 
+										echo "$uid paired"
+									else
+										# bluetooth pairing to $uid failed
+										error+=(20)
+									fi
+								else
+									echo "$uid previously paired"
+								fi
+							fi
+						else
+							# no host HCI interfaces available
+							error+=(26)
+						fi
 					fi
 				else
 					# $uid already assigned to $devassgnchck, won't force assignment to $devassgn
@@ -671,6 +684,7 @@ function linuxpandb {
 			# Print rfcomm table data
 			rfcomm
 		else
+			echo $uid "device is down"
 			# bluetooth ping failed to find passed macid.
 			error+=(22)
 		fi
@@ -715,6 +729,7 @@ function errorcatch {
 				"28" ) echo "error 28: no Arduinos attached to host";;
 				"29" ) echo "error 29: no host HCI interfaces available";;
 				"30" ) echo "error 30: preconditions test failed";;
+				"31" ) echo "error 36: Port is permanently closed";;
 			esac
 			if [ "$e" != 0 ]; then
 				errorcount=$(($errorcount+1))
