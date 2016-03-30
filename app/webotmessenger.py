@@ -57,6 +57,7 @@ class SendAndReceiveArguments(object):
         except (serial.SerialException, IndexError):
             raise SystemExit('Could not open serial port.')
         else:
+            time.sleep(5)
             print 'Serial port sucessfully opened.'
             self.messenger = CmdMessenger(self.serial_port)
             # attach callbacks
