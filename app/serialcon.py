@@ -158,13 +158,18 @@ def messagereturn(cuser,errorkey,stricterror=None,fullcycle=None):
 			return json.dumps(messresp)
 	elif (stricterror!=None) and (fullcycle==None):
 		print 'starting strict/escalated error logging'
-		errfound=False
 		for err in errordict:
 			if (stricterror==err["error"]):
 				print 'error '+str(err["error"])+":"+str(err["info"])
 				messresp["info"].append(err["info"])
-				errfound=True
 				return json.dumps(messresp)
+	elif (stricterror!=None) and (fullcycle!=None):
+			print 'fullcycle errors encountered'
+			for err in errordict:
+				if (stricterror==err["error"]):
+					print 'error '+str(err["error"])+":"+str(err["info"])
+					messresp["info"].append(err["info"])
+					return json.dumps(messresp)
 
 # ------------ F I R M W A R E  U P L O A D  &  B L U E T O O T H  I N Q U I R Y -----------------
 
@@ -276,7 +281,7 @@ def datasend(macid,alias,unick,commands,rfcset,uid,errorkey,cuser):
 		flush = ""
 	except serial.SerialException, e:
 		print 'Port %s not available.' %(devport)
-		print 'Will release and unpair from %s' % (uid)
+		print 'Will release and unpair from %s' %(uid)
 		print str(e)
 		rfcommbind(rfcset,macid,None,None,None,uid,"flush",errorkey,cuser,33)
 

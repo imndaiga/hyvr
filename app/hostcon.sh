@@ -504,6 +504,7 @@ function linuxflush {
 				keychck=$(cat /var/lib/bluetooth/$hciuid/linkkeys | grep -o $uid)
 				if [ -z "$keychck" ]; then
 					# HCI device lacks linkkey file
+					echo $uid "not previously paired to host"
 					error+=(14)
 				else
 					bluez-test-device remove $uid
@@ -512,6 +513,7 @@ function linuxflush {
 						echo "Unpairing" $uid "successful"
 					else
 						# unpairing was successful
+						echo "Unpairing $uid from host unsuccessful"
 						error+=(15)
 					fi
 				fi
