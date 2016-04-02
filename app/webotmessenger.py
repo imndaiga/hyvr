@@ -39,8 +39,8 @@ class SendAndReceiveArguments(object):
                     # try to open the first available usb port
                     self.port_name = self.list_usb_ports()[0][0]
                 elif (selinterface == "2"):
-                    print 'Set Baud=9600, readtimeout=0.5'
-                    self.baud = 9600
+                    print 'Set Baud=57600, readtimeout=0.5'
+                    self.baud = 57600
                     self.readtimeout = 0.5
                     print 'Bluetooth interface selected (/dev/rfcomm0)'
                     self.port_name = "/dev/rfcomm0"
@@ -50,7 +50,7 @@ class SendAndReceiveArguments(object):
                     self.port_name = self.list_usb_ports()[0][0]
             else:
                 print 'Setting up bluetooth courier configuration'
-                self.baud = 9600
+                self.baud = 57600
                 self.readtimeout = 0.5
                 self.port_name = port
             self.serial_port = serial.Serial(self.port_name, self.baud, timeout=0)

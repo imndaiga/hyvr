@@ -148,7 +148,7 @@ void attachCommandCallbacks()
 void setup() 
 {
   // Listen on serial connection for messages from the pc
-  serBluetooth.begin(9600);
+  serBluetooth.begin(57600);
 
   // Adds newline to every command
   cmdMessenger.printLfCr();   

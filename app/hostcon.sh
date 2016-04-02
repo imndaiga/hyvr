@@ -603,7 +603,7 @@ function linuxpandb {
 					if [ -f /var/lib/bluetooth/$hciuid/linkkeys ]; then
 						keychck=$(cat /var/lib/bluetooth/$hciuid/linkkeys | grep -o $uid)
 						if [ -z "$keychck" ]; then
-							echo 1234 | bluez-simple-agent $hcinum $uid
+							echo 4321 | bluez-simple-agent $hcinum $uid
 							exstat=$?
 							# http://stackoverflow.com/questions/748445/shell-status-codes-in-make
 							if [ "$exstat" = "0" ]; then 
