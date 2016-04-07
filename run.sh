@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 echo "Restarting device bus and bluetooth services"
-service dbus restart
-service bluetooth restart
+# service dbus restart
+# service bluetooth restart
+systemctl restart dbus
+systemctl restart bluetooth
 
 echo "Validating for database instantiation"
 if [ ! -f "../data/app.db" ]; then

@@ -580,11 +580,20 @@ function linuxpandb {
 		# begin pairing and binding process
 		# restart systemd dbus and bluetooth services as a fail safe check
 		# The arm processor flag check ensures this isn't run on a VM (it'll break it).
+		# armflag=$(uname -m | grep -o arm)
+		# if [ ! -z "$armflag" ]; then
+		# 	service dbus restart
+		# fi
+		# service bluetooth restart
 		armflag=$(uname -m | grep -o arm)
 		if [ ! -z "$armflag" ]; then
-			service dbus restart
+			systemctl restart dbus
+			systemctl restart bluetooth
 		fi
-		service bluetooth restart
+		x86flag=$(uname -m | grep -o x86)
+		if [ ! -z "$x86flag" ]; then
+			service bluetooth restart
+		fi
 		echo "Checking connection status of" $uid "to" $host "host"
 		# bluetooth ping(ONCE) the bluetooth client to confirm it's up
 		hciuid=$(hciconfig | grep -o ..:..:..:..:..:..)
