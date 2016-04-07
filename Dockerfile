@@ -19,8 +19,6 @@ RUN sudo apt-get update \
     python-dev \
     python-pip \
     usbutils \
-    #bluez \
-    #bluez-utils \
     python-gobject \
     python-bluez \
     nano \
@@ -51,21 +49,6 @@ ADD . ./
 
 # set permissions
 RUN chmod 755 db_start.py tests.py run.py run.sh app/hostcon.sh firmwareman.sh
-
-# download, unzip, configure, build and install bluez4.101
-# if a dependancy error is output from the configure script
-# that typically means that a particular apt-get package install
-# failed.
-RUN mkdir bluez && \
-cd bluez && \
-wget www.kernel.org/pub/linux/bluetooth/bluez-4.101.tar.xz && \
-unxz bluez-4.101.tar.xz && \
-tar xvf bluez-4.101.tar && \
-cd bluez-4.101 && \
-./configure && \
-make && \
-make install && \
-cd /webot
 
 # Start the web app
 CMD ["/bin/bash", "run.sh"]
