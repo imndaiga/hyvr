@@ -28,12 +28,14 @@ RUN sudo apt-get update \
     picocom \
     lsof \
     make \
+    dbus \
     libusb-dev \
     libdbus-1-dev \
     libglib2.0-dev \
     libudev-dev \
     libical-dev \
     libreadline-dev \
+    checkinstall \
   && apt-get clean
 
 # Set application directory

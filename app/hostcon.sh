@@ -587,8 +587,8 @@ function linuxpandb {
 		# service bluetooth restart
 		armflag=$(uname -m | grep -o arm)
 		if [ ! -z "$armflag" ]; then
-			systemctl restart dbus
-			systemctl restart bluetooth
+			systemctl try-restart dbus
+			systemctl try-restart bluetooth
 		fi
 		x86flag=$(uname -m | grep -o x86)
 		if [ ! -z "$x86flag" ]; then
