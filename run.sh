@@ -32,9 +32,12 @@ if [ $? != 0 ]; then
             --enable-tools          \
             --enable-wiimote        && \
     make && \
-    # using checkinstall to install the bluez package instead of make
-    # as described by lfs
-    checkinstall -y
+    # using checkinstall to install the bluez package instead of make as described by lfs
+    # checkinstall can't create the bluetooth lib directory if it doesn't exist so we're doing that here.
+    if [ ! -f  /usr/lib/bluetooth ]; then
+    	echo "Creating bluetooth library path"
+    	mkdir /usr/lib/bluetooth
+    fi
     # for CONFFILE in audio input network serial ; do
     #     install -v -m644 ${CONFFILE}/${CONFFILE}.conf /etc/bluetooth/${CONFFILE}.conf
     # done
@@ -44,7 +47,8 @@ if [ $? != 0 ]; then
     # cd ../blfs-bootscripts-20150924 && \
     # make install-bluetooth && \
     # make clean && \
-    # make distclean && \
+    # make distclean
+    checkinstall -y
 else
     bluezversion=$(dpkg -s bluez | grep -i version)
     echo "Bluez already installed: version $bluezversion"

@@ -29,12 +29,15 @@ RUN sudo apt-get update \
     lsof \
     make \
     dbus \
+    # the following packages were installed to allow for beacon support 
+    # https://learn.adafruit.com/pibeacon-ibeacon-with-a-raspberry-pi/setting-up-the-pi
     libusb-dev \
     libdbus-1-dev \
     libglib2.0-dev \
     libudev-dev \
     libical-dev \
     libreadline-dev \
+    # the following package is used to install through the dpkg utility
     checkinstall \
   && apt-get clean
 
