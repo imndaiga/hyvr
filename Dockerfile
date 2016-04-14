@@ -37,6 +37,7 @@ RUN sudo apt-get update \
     libudev-dev \
     libical-dev \
     libreadline-dev \
+    checkinstall \
   && apt-get clean
 
 # Set application directory

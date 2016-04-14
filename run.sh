@@ -6,6 +6,7 @@ echo "Checking bluez package"
 # that typically means that a particular apt-get package install
 # failed.
 # https://learn.adafruit.com/pibeacon-ibeacon-with-a-raspberry-pi/setting-up-the-pi
+# Using checkinstall instead to ensure that the bluez package is registered with apt package manager
 dpkg -s bluez
 if [ $? != 0 ]; then
     echo "Will download, unzip, configure, build and install bluez5.11"
@@ -23,7 +24,10 @@ if [ $? != 0 ]; then
                 --sysconfdir=/etc       \
                 --localstatedir=/var && \
     make && \
-    make install
+    # make install
+    # fstrans switch fixes checkinstalls mkdir bug
+    # (https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=717778)
+    checkinstall --fstrans=no
 else
     bluezversion=$(dpkg -s bluez | grep -i version)
     echo "bluez package already installed: version $bluezversion"
