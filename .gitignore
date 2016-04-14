@@ -6,6 +6,8 @@
 flask/
 instance/config.py
 sketches/*/build-uno
+webot.sublime-project
+webot.sublime-workspace
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

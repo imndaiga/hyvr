@@ -37,8 +37,6 @@ RUN sudo apt-get update \
     libudev-dev \
     libical-dev \
     libreadline-dev \
-    # the following package is used to install through the dpkg utility
-    checkinstall \
   && apt-get clean
 
 # Set application directory

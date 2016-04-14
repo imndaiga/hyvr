@@ -24,8 +24,6 @@ apt-get update && apt-get install -y \
     libudev-dev \
     libical-dev \
     libreadline-dev \
-    # the following package is used to install through the dpkg utility
-    checkinstall \
   && apt-get clean
 
 chmod 755 db_start.py
@@ -37,60 +35,43 @@ chmod 755 firmwareman.sh
 chmod 755 unixrun.sh
 
 echo "Checking bluez package"
-# download, unzip, configure, build and install bluez4.101
-# if a dependancy error is output from the configure script
-# that typically means that a particular apt-get package install
-# failed.
-# http://www.linuxfromscratch.org/blfs/view/7.4/general/bluez.html
-dpkg -s bluez
-if [ $? != 0 ]; then
-    echo "Will download, unzip, configure, build and install bluez4.101"
-    mkdir bluez && \
-    cd bluez && \
-    wget www.kernel.org/pub/linux/bluetooth/bluez-4.101.tar.xz && \
-    # bootscripts not required since checkinstall manages all that
-    # wget anduin.linuxfromscratch.org/BLFS/blfs-bootscripts/blfs-bootscripts-20150924.tar.bz2 && \
-    # tar xvjpf blfs-bootscripts-20150924.tar.bz2 && \
-    unxz bluez-4.101.tar.xz && \
-    tar xvf bluez-4.101.tar && \
-    cd bluez-4.101 && \
-    ./configure --prefix=/usr       \
-            --mandir=/usr/share/man \
-            --sysconfdir=/etc       \
-            --localstatedir=/var    \
-            --libexecdir=/lib       \
-            --enable-bccmd          \
-            --enable-dfutool        \
-            --enable-dund           \
-            --enable-hid2hci        \
-            --enable-hidd           \
-            --enable-pand           \
-            --enable-tools          \
-            --enable-wiimote        && \
-    make && \
-    # using checkinstall to install the bluez package instead of make as described by lfs
-    # checkinstall can't create the bluetooth lib directory if it doesn't exist so we're doing that here.
-    if [ ! -f  /usr/lib/bluetooth ]; then
-        echo "Creating bluetooth library path"
-        mkdir /usr/lib/bluetooth
+armflag=$(uname -m | grep -o arm)
+if [ ! -z "$armflag" ]; then
+    # download, unzip, configure, build and install bluez5.11
+    # if a dependancy error is output from the configure script
+    # that typically means that a particular apt-get package install
+    # failed.
+    # https://learn.adafruit.com/pibeacon-ibeacon-with-a-raspberry-pi/setting-up-the-pi
+    dpkg -s bluez
+    if [ $? != 0 ]; then
+        echo "Will download, unzip, configure, build and install bluez5.11"
+        if [ -f bluez ]; then
+            rm -rf bluez
+        fi
+        mkdir bluez && \
+        cd bluez && \
+        wget www.kernel.org/pub/linux/bluetooth/bluez-5.11.tar.xz && \
+        unxz bluez-5.11.tar.xz && \
+        tar xvf bluez-5.11.tar && \
+        cd bluez-5.11 && \
+        ./configure --prefix=/usr           \
+                    --mandir=/usr/share/man \
+                    --sysconfdir=/etc       \
+                    --localstatedir=/var && \
+        make && \
+        make install
+    else
+        bluezversion=$(dpkg -s bluez | grep -i version)
+        echo "bluez package already installed: version $bluezversion"
     fi
-    # for CONFFILE in audio input network serial ; do
-    #     install -v -m644 ${CONFFILE}/${CONFFILE}.conf /etc/bluetooth/${CONFFILE}.conf
-    # done
-    # unset CONFFILE && \
-    # install -v -m755 -d /usr/share/doc/bluez-4.101 && \
-    # install -v -m644 doc/*.txt /usr/share/doc/bluez-4.101
-    # cd ../blfs-bootscripts-20150924 && \
-    # make install-bluetooth && \
-    # make clean && \
-    # make distclean
-    checkinstall -y
-else
-    bluezversion=$(dpkg -s bluez | grep -i version)
-    echo "Bluez already installed: version $bluezversion"
+
+    cd /webot
+fi
+x86flag=$(uname -m | grep -o x86)
+if [ ! -z "$x86flag" ]; then
+    sudo apt-get install bluez
 fi
 
-cd /webot
 echo "Running firmware manager"
 ./firmwareman.sh
 echo "Priming one HCI device on host"
