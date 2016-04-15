@@ -19,8 +19,6 @@ RUN sudo apt-get update \
     python-dev \
     python-pip \
     usbutils \
-    python-gobject \
-    python-bluez \
     nano \
     arduino-mk \
     wget \
@@ -29,15 +27,20 @@ RUN sudo apt-get update \
     lsof \
     make \
     dbus \
-    # the following packages were installed to allow for beacon support 
+    checkinstall \
+    # the following packages were installed according to the following instructions by K-Town
     # https://learn.adafruit.com/pibeacon-ibeacon-with-a-raspberry-pi/setting-up-the-pi
+    # python-dbus and python-gobject are additionally required to get the bluez test functions to work
     libusb-dev \
     libdbus-1-dev \
     libglib2.0-dev \
     libudev-dev \
     libical-dev \
     libreadline-dev \
-    checkinstall \
+    python-dbus \
+    python-gobject \
+    # the following dependancy is defined by http://www.elinux.org/RPi_Bluetooth_LE
+    libdbus-glib-1-dev \
   && apt-get clean
 
 # Set application directory

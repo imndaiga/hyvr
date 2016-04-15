@@ -1,24 +1,42 @@
 #!/usr/bin/env bash
 
 echo "Checking bluez package"
-# download, unzip, configure, build and install bluez5.11
+# download, unzip, configure, build and install bluez5.32
 # if a dependancy error is output from the configure script
 # that typically means that a particular apt-get package install
 # failed.
-# https://learn.adafruit.com/pibeacon-ibeacon-with-a-raspberry-pi/setting-up-the-pi
+# Following a number of tutorials to install bluez to set up with bluepy:
+# - https://learn.adafruit.com/pibeacon-ibeacon-with-a-raspberry-pi/setting-up-the-pi
+# - http://www.elinux.org/RPi_Bluetooth_LE
 # Using checkinstall instead to ensure that the bluez package is registered with apt package manager
-dpkg -s bluez
-if [ $? != 0 ]; then
-    echo "Will download, unzip, configure, build and install bluez5.11"
+# By default, bluez is set to not install i.e bluezinstallflag=0
+bluezinstallflag=0
+bluezversion=$(dpkg -s bluez | grep Version | cut -f2- -d' ')
+if [ -z $bluezversion ]; then
+    echo "Bluez not installed"
+    bluezinstallflag=1
+else
+    echo "Bluez already installed"
+    if [[ "$bluezversion" != *'5.32'* ]]; then
+        echo "Purging bluez version $bluezversion"
+        apt-get purge bluez && \
+        bluezinstallflag=1
+    else
+        echo "Correct bluez version installed"
+    fi
+fi
+
+if [ $bluezinstallflag -eq 1 ]; then
+    echo "Will download, unzip, configure, build and install bluez version 5.32"
     if [ -f bluez ]; then
         rm -rf bluez
     fi
     mkdir bluez && \
     cd bluez && \
-    wget www.kernel.org/pub/linux/bluetooth/bluez-5.11.tar.xz && \
-    unxz bluez-5.11.tar.xz && \
-    tar xvf bluez-5.11.tar && \
-    cd bluez-5.11 && \
+    wget www.kernel.org/pub/linux/bluetooth/bluez-5.32.tar.xz && \
+    unxz bluez-5.32.tar.xz && \
+    tar xvf bluez-5.32.tar && \
+    cd bluez-5.32 && \
     ./configure --prefix=/usr           \
                 --mandir=/usr/share/man \
                 --sysconfdir=/etc       \
@@ -27,13 +45,14 @@ if [ $? != 0 ]; then
     # make install
     # fstrans switch fixes checkinstalls mkdir bug
     # (https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=717778)
-    checkinstall --fstrans=no
-else
-    bluezversion=$(dpkg -s bluez | grep -i version)
-    echo "bluez package already installed: version $bluezversion"
+    checkinstall --fstrans=no -y
+    echo "Will now pull the bluepy pip package and install it"
+    cd /webot
 fi
 
-cd /webot
+echo "Will now globally pip install bluepy"
+pip install bluepy
+
 
 echo "Restarting device bus and bluetooth services"
 # service dbus restart

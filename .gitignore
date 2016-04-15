@@ -2,10 +2,12 @@
 *.pyc
 *.pyo
 
-# Keep out sensitive data and development test files
+# Keep out sensitive data & development folders and files
 flask/
 instance/config.py
 sketches/*/build-uno
+bluez/
+bluepy/
 webot.sublime-project
 webot.sublime-workspace
 

@@ -7,6 +7,9 @@ pip install virtualenv
 virtualenv flask --system-site-packages
 flask/bin/pip install -r requirements.txt
 
+echo "Will now globally pip install bluepy"
+flask/bin/pip install bluepy
+
 echo "Creating and testing SQLAlchemy database"
 flask/bin/python db_start.py
 flask/bin/python tests.py
